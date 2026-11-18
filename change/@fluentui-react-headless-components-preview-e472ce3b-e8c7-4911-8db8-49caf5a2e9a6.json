@@ -1,6 +1,6 @@
 {
   "type": "minor",
-  "comment": "BREAKING CHANGE: rebuild headless Calendar as a single component",
+  "comment": "BREAKING CHANGE: rebuild headless Calendar as a single component; align DatePicker combobox semantics, native calendar button and locale support, independent Calendar picker-year browsing and staged Escape, and TimePicker filtering, validation and keyboard behavior. TimePicker now accepts custom times by default and uses a native Clear button slot.",
   "packageName": "@fluentui/react-headless-components-preview",
   "email": "dmytrokirpa@microsoft.com",
   "dependentChangeType": "patch"
