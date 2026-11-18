@@ -78,6 +78,21 @@ describe('DatePicker', () => {
       await waitFor(() => expect(selected).toHaveFocus());
     });
 
+    it('focuses the nearest rendered day when a renderer omits the selected day', async () => {
+      const saturday = new Date(2026, 7, 15);
+      const { getByRole, getDialog } = renderDatePicker({
+        defaultValue: saturday,
+        calendar: {
+          renderCell: (props, cell, defaultRender) =>
+            cell.type === 'day' && [0, 6].includes(cell.originalDate?.getDay() ?? -1) ? null : defaultRender(props),
+        },
+      });
+
+      fireEvent.click(getByRole('button', { name: 'Due date August 15, 2026' }));
+
+      await waitFor(() => expect(getDayCell(getDialog(), 'August 14, 2026')).toHaveFocus());
+    });
+
     it('focuses the first available day of the month when today is unavailable', async () => {
       const { getByRole, getDialog } = renderDatePicker({
         calendar: { restrictedDates: [new Date(2026, 7, 1), new Date(2026, 7, 2), today] },
@@ -287,6 +302,30 @@ describe('DatePicker', () => {
       await waitFor(() => expect(within(yearGrid).getAllByRole('gridcell')).toHaveLength(12));
       expect(within(yearGrid).getByRole('gridcell', { name: /2026/ })).toHaveAttribute('aria-current', 'date');
       expect(getDialog()).toBeInTheDocument();
+    });
+
+    it('names the day heading after the view it opens', () => {
+      const { getByRole, getDialog } = renderDatePicker({ calendar: { dayHeadingView: 'month' } });
+      fireEvent.click(getByRole('button', { name: 'Due date Select a date' }));
+
+      expect(within(getDialog()).getByRole('button', { name: 'August 2026, change month' })).toBeInTheDocument();
+    });
+
+    it('keeps the day heading static when the year grid is hidden', () => {
+      const { getByRole, getDialog } = renderDatePicker({ calendar: { yearPickerHidden: true } });
+      fireEvent.click(getByRole('button', { name: 'Due date Select a date' }));
+
+      expect(within(getDialog()).getByText('August 2026').closest('button')).toBeNull();
+      expect(within(getDialog()).queryByRole('button', { name: /^August 2026, change/ })).toBeNull();
+    });
+
+    it('keeps a consumer day heading formatter', () => {
+      const { getByRole, getDialog } = renderDatePicker({
+        calendar: { formatters: { dayPickerHeaderLabel: data => `${data.formattedDate}, pick` } },
+      });
+      fireEvent.click(getByRole('button', { name: 'Due date Select a date' }));
+
+      expect(within(getDialog()).getByRole('button', { name: 'August 2026, pick' })).toBeInTheDocument();
     });
 
     it('moves focus to the year-range grid each time the day calendar heading is activated', async () => {
@@ -707,7 +746,7 @@ describe('DatePicker', () => {
     const { getByRole } = renderDatePicker({
       open: true,
       calendar: {
-        dayPicker: { closeButton: { children: 'Close calendar' } },
+        closeButton: { children: 'Close calendar' },
         onDismiss: event => event.preventDefault(),
       },
     });
